@@ -34,3 +34,25 @@ flowchart TD
     G --> H[Notificar confirmación]
     H --> I[Fin]
 ```
+
+## Diagrama de secuencia
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant S as Sistema
+    participant DB as Base de datos
+
+    U->>S: Iniciar proceso
+    S-->>U: Mostrar formulario
+    U->>S: Enviar solicitud con datos
+    S->>S: Validar datos
+
+    alt Datos válidos
+        S->>DB: Guardar solicitud
+        DB-->>S: Confirmación de guardado
+        S-->>U: Solicitud registrada correctamente
+    else Datos inválidos
+        S-->>U: Mostrar errores de validación
+    end
+```
