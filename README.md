@@ -2,11 +2,11 @@
 
 ## Conejo Pulverizador
 
-Demo Beat'em up estilo NES: un conejo blanco musculoso vs zanahorias zombies en un bosque terrorífico.
+Demo **belt-scroll Beat 'em up** estilo NES: conejo musculoso vs zanahorias zombies en un bosque continuo con scroll lateral, profundidad y fight locks.
 
 ```bash
 cd rabbit-brawler
 npm start
 ```
 
-Abre `http://localhost:4173`. Detalles, controles y cómo generar APK: [`rabbit-brawler/README.md`](rabbit-brawler/README.md).
+Docs: [`rabbit-brawler/docs/GENERO-BEATEMUP.md`](rabbit-brawler/docs/GENERO-BEATEMUP.md) · [`rabbit-brawler/docs/DISENO-CONEJO-PULVERIZADOR.md`](rabbit-brawler/docs/DISENO-CONEJO-PULVERIZADOR.md)

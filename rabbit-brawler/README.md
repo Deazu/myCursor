@@ -1,52 +1,53 @@
 # Conejo Pulverizador
 
-Demo de un solo nivel **Beat'em up** estilo NES para móvil (web, empaquetable como APK).
+Demo **belt-scroll Beat 'em up** estilo NES para móvil (HTML5, publicable / empaquetable como APK).
 
-## Historia
+Documentación:
 
-Un conejo blanco musculoso recorre un bosque terrorífico y elimina zanahorias zombies a puñetazos y patadas.
+- [`docs/GENERO-BEATEMUP.md`](docs/GENERO-BEATEMUP.md) — investigación del género
+- [`docs/DISENO-CONEJO-PULVERIZADOR.md`](docs/DISENO-CONEJO-PULVERIZADOR.md) — diseño v2 y por qué el v1 no bastaba
 
-## Reglas de la demo
+## Por qué es un Beat 'em up
+
+- **Scroll lateral continuo** con cámara que sigue al conejo
+- Movimiento en **profundidad** (↑↓) sobre la cinta de suelo
+- Golpes que requieren **alinear profundidad**
+- **Fight locks**: limpias la oleada → aparece **GO →** → sigues caminando
+- 6 tramos · 30 zanahorias · cierre con **Rey Zanahoria**
+
+## Reglas (brief)
 
 | Regla | Valor |
 | --- | --- |
-| Vidas del conejo | 3 (se acaba el juego al llegar a 0) |
-| Daño enemigo | 0.5 por golpe |
-| Ataques | Puño (corto, 1 golpe mata) · Patada (más alcance, 2 golpes matan) |
-| Recuperación | Lechugas al azar (+1 vida) |
-| IA enemiga | Solo una zanahoria intenta golpear a la vez |
-| Pantallas | 6 |
-| Enemigos por pantalla | 5 |
-| Objetivo | Eliminar 30 zanahorias |
-
-No puedes avanzar de pantalla hasta limpiar a todos los enemigos de la actual.
+| Vidas | 3 (game over a 0) |
+| Daño enemigo | 0.5 (Rey: 1.0) |
+| Puño | corto, 2 daño (mata normal en 1) |
+| Patada | más alcance, 1 daño (mata normal en 2) |
+| Recuperación | lechugas (+1) |
+| IA | una zanahoria agresora a la vez; el resto flanquea |
+| Objetivo | 30 bajas |
 
 ## Controles
 
-**Teclado:** WASD / flechas · `Z` puño · `X` patada · Enter para menús  
-**Táctil:** cruceta + botones A (puño) / B (patada)
+**Teclado:** WASD / flechas · `Z` puño · `X` patada  
+**Táctil:** cruceta + A / B
 
-## Jugar en el navegador
+## Jugar
 
 ```bash
 cd rabbit-brawler
 npm start
 ```
 
-Abre `http://localhost:4173` (también funciona sirviendo la carpeta con cualquier static server).
+`http://localhost:4173` — también `conejo-pulverizador.html` (archivo único).
 
-En el teléfono: abre la misma URL en la red local, o despliega la carpeta como sitio estático / PWA.
+App publicada: confirma en Cursor Publish Settings / pill de la app.
 
-## Generar APK (Android)
-
-La demo es HTML5/Canvas. Para APK usa Capacitor:
+## APK
 
 ```bash
-cd rabbit-brawler
 npm run build:web
-npm run cap:init    # solo la primera vez
+npm run cap:init    # primera vez
 npm run cap:sync
-npm run cap:open    # abre Android Studio → Build APK / Bundle
+npm run cap:open
 ```
-
-Requisitos: Android Studio, JDK y SDK de Android instalados en tu máquina.
