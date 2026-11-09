@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0a1208" />
+  <meta name="description" content="Beat'em up HTML5: conejo musculoso vs zanahorias zombies. Demo jugable en celular." />
+  <title>Conejo Pulverizador — Beat'em Up Demo</title>
+  <style>
+:root {
+  --bg: #070b06;
+  --panel: #10180e;
+  --moss: #2f5a28;
+  --blood: #9b2b1f;
+  --bone: #d7c7a0;
+  --carrot: #d66a1f;
+  --leaf: #5fbf45;
+  --pixel: 2px;
+  --font-display: "Press Start 2P", "VT323", "Courier New", monospace;
+  --font-ui: "VT323", "Courier New", monospace;
+}
+
+@font-face {
+  font-family: "Press Start 2P";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nVivNm4I81.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "VT323";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/vt323/v17/pxiKyp0ihIEF2hsYHpT2dkNE.woff2") format("woff2");
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: none;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse at 50% 0%, #142014 0%, transparent 55%),
+    linear-gradient(180deg, #0a1208 0%, #050705 100%);
+  color: var(--bone);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+}
+
+#app {
+  height: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  padding-top: max(0.45rem, env(safe-area-inset-top));
+  padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
+  padding-left: max(0.45rem, env(safe-area-inset-left));
+  padding-right: max(0.45rem, env(safe-area-inset-right));
+}
+
+#hud {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 0.4rem;
+  align-items: center;
+  background: rgba(8, 14, 8, 0.85);
+  border: var(--pixel) solid #243820;
+  padding: 0.35rem 0.55rem;
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.hud-block.center {
+  align-items: center;
+  text-align: center;
+}
+
+.hud-block.right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: #7f956f;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: clamp(0.55rem, 2.2vw, 0.72rem);
+  color: #e8d7a8;
+  text-shadow: 2px 2px 0 #3a1a10;
+}
+
+#screen-info,
+#kill-count {
+  font-size: 1rem;
+  color: var(--carrot);
+}
+
+#hearts {
+  display: flex;
+  gap: 0.2rem;
+  min-height: 1rem;
+}
+
+.heart {
+  width: 14px;
+  height: 12px;
+  background: var(--blood);
+  clip-path: polygon(50% 100%, 0 35%, 18% 0, 50% 18%, 82% 0, 100% 35%);
+  position: relative;
+}
+
+.heart.half::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 50%;
+  background: #2a2018;
+}
+
+.heart.empty {
+  background: #2a2018;
+}
+
+#stage-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.015) 0 2px,
+      transparent 2px 4px
+    ),
+    #000;
+  border: var(--pixel) solid #1d2b1a;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.65);
+}
+
+#game {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 8, 4, 0.82);
+  padding: 0.75rem;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.panel {
+  width: min(100%, 420px);
+  background: linear-gradient(180deg, #152015, #0c120c);
+  border: 3px solid #4a6b3a;
+  padding: 1rem 1.1rem;
+  text-align: center;
+  box-shadow: 0 0 0 2px #0a0f0a, 6px 6px 0 #000;
+}
+
+.panel h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(0.7rem, 3.5vw, 0.95rem);
+  color: #f0e2b8;
+  line-height: 1.45;
+}
+
+.tagline {
+  margin: 0 0 0.7rem;
+  color: var(--carrot);
+  font-size: 1rem;
+}
+
+.panel p {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: #c9d6b8;
+}
+
+.tips {
+  text-align: left;
+  margin: 0 0 0.9rem;
+  padding-left: 1.1rem;
+  font-size: 0.98rem;
+  color: #a8b898;
+}
+
+.tips li {
+  margin-bottom: 0.25rem;
+}
+
+#btn-start {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  padding: 0.7rem 1rem;
+  border: 3px solid #86c45a;
+  background: #1f3d18;
+  color: #d7f0b8;
+  cursor: pointer;
+}
+
+#btn-start:active {
+  transform: translate(1px, 1px);
+}
+
+.hint {
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  color: #738566;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: end;
+  padding: 0.15rem 0.2rem 0.35rem;
+}
+
+.dpad {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  justify-self: start;
+}
+
+.pad {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border: 2px solid #4d6644;
+  background: #152015;
+  color: #c5d9b4;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+.pad.up { left: 51px; top: 4px; }
+.pad.down { left: 51px; bottom: 4px; }
+.pad.left { left: 4px; top: 51px; }
+.pad.right { right: 4px; top: 51px; }
+
+.pad.active,
+.act.active {
+  background: #2f4f28;
+  border-color: #8dcf68;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding-bottom: 0.35rem;
+}
+
+.act {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid #7a3a28;
+  background: radial-gradient(circle at 35% 30%, #6a2f22, #3a1510);
+  color: #f3d7b0;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.act.kick {
+  border-color: #3a5f8a;
+  background: radial-gradient(circle at 35% 30%, #2f4f78, #142438);
+}
+
+.act small {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+@media (min-width: 800px) {
+  #controls {
+    opacity: 0.55;
+  }
+
+  .desktop-hint {
+    display: block;
+  }
+}
+
+@media (max-width: 799px) {
+  .desktop-hint {
+    display: none;
+  }
+
+  .brand {
+    font-size: 0.55rem;
+  }
+
+  .dpad {
+    width: 168px;
+    height: 168px;
+  }
+
+  .pad {
+    width: 54px;
+    height: 54px;
+    font-size: 1.15rem;
+  }
+
+  .pad.up { left: 57px; top: 4px; }
+  .pad.down { left: 57px; bottom: 4px; }
+  .pad.left { left: 4px; top: 57px; }
+  .pad.right { right: 4px; top: 57px; }
+
+  .act {
+    width: 84px;
+    height: 84px;
+    font-size: 0.78rem;
+  }
+
+  .panel {
+    max-height: 85%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .tips {
+    font-size: 0.92rem;
+  }
+}
+
+@media (max-width: 799px) and (orientation: landscape) {
+  #hud {
+    padding: 0.2rem 0.4rem;
+  }
+
+  .dpad {
+    width: 132px;
+    height: 132px;
+  }
+
+  .pad {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pad.up { left: 45px; top: 2px; }
+  .pad.down { left: 45px; bottom: 2px; }
+  .pad.left { left: 2px; top: 45px; }
+  .pad.right { right: 2px; top: 45px; }
+
+  .act {
+    width: 64px;
+    height: 64px;
+  }
+
+  .panel h1 {
+    font-size: 0.65rem;
+  }
+
+  .tips {
+    display: none;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header id="hud">
+      <div class="hud-block">
+        <span class="label">VIDAS</span>
+        <div id="hearts" aria-live="polite"></div>
+      </div>
+      <div class="hud-block center">
+        <span class="brand">CONEJO PULVERIZADOR</span>
+        <span id="screen-info">TRAMO 1/6</span>
+      </div>
+      <div class="hud-block right">
+        <span class="label">ZANAHORIAS</span>
+        <span id="kill-count">0/30</span>
+      </div>
+    </header>
+
+    <main id="stage-wrap">
+      <canvas id="game" width="320" height="180" aria-label="Beat'em up belt-scroll"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="panel">
+          <h1>CONEJO PULVERIZADOR</h1>
+          <p class="tagline">Belt-scroll Beat'em up · demo NES</p>
+          <p>Recorre el bosque terrorífico. Limpia oleadas, sigue GO → y derrota al Rey Zanahoria.</p>
+          <ul class="tips">
+            <li>Scroll lateral continuo · muévete también en profundidad (↑↓)</li>
+            <li>Puño: corto / 1 hit · Patada: largo / 2 hits</li>
+            <li>Lechugas = vida · 6 tramos · 30 enemigos</li>
+          </ul>
+          <button id="btn-start" type="button">EMPEZAR</button>
+          <p class="hint desktop-hint">Teclado: ←→↑↓ / WASD · Z puño · X patada</p>
+        </div>
+      </div>
+    </main>
+
+    <div id="controls" aria-label="Controles táctiles">
+      <div class="dpad">
+        <button type="button" data-dir="up" class="pad up">▲</button>
+        <button type="button" data-dir="left" class="pad left">◀</button>
+        <button type="button" data-dir="right" class="pad right">▶</button>
+        <button type="button" data-dir="down" class="pad down">▼</button>
+      </div>
+      <div class="actions">
+        <button type="button" id="btn-punch" class="act punch">A<br /><small>PUÑO</small></button>
+        <button type="button" id="btn-kick" class="act kick">B<br /><small>PATADA</small></button>
+      </div>
+    </div>
+  </div>
+  <script>
+(() => {
+  "use strict";
+
+  // ============================================================
+  // Conejo Pulverizador v2 — belt-scroll beat 'em up
+  // See docs/GENERO-BEATEMUP.md and docs/DISENO-CONEJO-PULVERIZADOR.md
+  // ============================================================
+
+  const W = 320;
+  const H = 180;
+  const SECTIONS = 6;
+  const SECTION_W = 320;
+  const LEVEL_W = SECTIONS * SECTION_W;
+  const ENEMIES_PER_SECTION = 5;
+  const TOTAL_ENEMIES = SECTIONS * ENEMIES_PER_SECTION;
+
+  const PLAY_TOP = 96;
+  const PLAY_BOTTOM = 150;
+  const DEPTH_HIT = 12;
+
+  const PLAYER_MAX_HP = 3;
+  const ENEMY_DAMAGE = 0.5;
+  const BOSS_DAMAGE = 1.0;
+  const PUNCH_DAMAGE = 2;
+  const KICK_DAMAGE = 1;
+  const PUNCH_RANGE = 22;
+  const KICK_RANGE = 40;
+  const ENEMY_HP = 2;
+  const BOSS_HP = 8;
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  const overlay = document.getElementById("overlay");
+  const btnStart = document.getElementById("btn-start");
+  const heartsEl = document.getElementById("hearts");
+  const screenInfo = document.getElementById("screen-info");
+  const killCount = document.getElementById("kill-count");
+
+  const keys = Object.create(null);
+  const touch = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    punch: false,
+    kick: false,
+  };
+
+  // title | playing | go | win | lose
+  let state = "title";
+  let message = "";
+  let sectionIndex = 0;
+  let kills = 0;
+  let cameraX = 0;
+  let screenFlash = 0;
+  let lettuceTimer = 0;
+  let attackLock = null;
+  let attackCooldown = 0;
+  let screenGrace = 0;
+  let locked = false;
+  let goBlink = 0;
+  let score = 0;
+  let combo = 0;
+  let comboTimer = 0;
+
+  const player = {
+    x: 48,
+    y: 124,
+    w: 16,
+    h: 28,
+    facing: 1,
+    hp: PLAYER_MAX_HP,
+    invuln: 0,
+    attack: null,
+    anim: 0,
+    walking: false,
+  };
+
+  let enemies = [];
+  let lettuces = [];
+  let particles = [];
+  let floatTexts = [];
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function depthOf(ent) {
+    return ent.y + ent.h;
+  }
+
+  function sameDepth(a, b) {
+    return Math.abs(depthOf(a) - depthOf(b)) <= DEPTH_HIT;
+  }
+
+  function aabb(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function sectionStart(i) {
+    return i * SECTION_W;
+  }
+
+  function sectionEnd(i) {
+    return (i + 1) * SECTION_W;
+  }
+
+  function lockTriggerX(i) {
+    return sectionStart(i) + 150;
+  }
+
+  function livingInSection(i) {
+    return enemies.filter((e) => e.section === i && e.state !== "dead");
+  }
+
+  function updateHud() {
+    screenInfo.textContent = `TRAMO ${Math.min(sectionIndex + 1, SECTIONS)}/${SECTIONS}`;
+    killCount.textContent = `${kills}/${TOTAL_ENEMIES}`;
+    heartsEl.innerHTML = "";
+    for (let i = 0; i < PLAYER_MAX_HP; i++) {
+      const heart = document.createElement("div");
+      heart.className = "heart";
+      const remain = player.hp - i;
+      if (remain <= 0) heart.classList.add("empty");
+      else if (remain < 1) heart.classList.add("half");
+      heartsEl.appendChild(heart);
+    }
+  }
+
+  function addFloat(x, y, text, color) {
+    floatTexts.push({ x, y, text, color, life: 42 });
+  }
+
+  function addParticles(x, y, color, n = 6) {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 2.6,
+        vy: -Math.random() * 2.4 - 0.3,
+        life: 16 + Math.random() * 14,
+        color,
+      });
+    }
+  }
+
+  function spawnSectionEnemies(i) {
+    const base = sectionStart(i);
+    const isBossSection = i === SECTIONS - 1;
+    const count = isBossSection ? ENEMIES_PER_SECTION - 1 : ENEMIES_PER_SECTION;
+
+    for (let n = 0; n < count; n++) {
+      enemies.push({
+        id: `${i}-${n}`,
+        section: i,
+        kind: "grunt",
+        x: base + 190 + n * 22 + (n % 2) * 8,
+        y: PLAY_TOP + 8 + (n % 4) * 10,
+        w: 14,
+        h: 24,
+        hp: ENEMY_HP,
+        facing: -1,
+        state: "idle",
+        timer: 30 + n * 10,
+        anim: n * 5,
+        hitFlash: 0,
+      });
+    }
+
+    if (isBossSection) {
+      enemies.push({
+        id: `${i}-boss`,
+        section: i,
+        kind: "boss",
+        x: base + 240,
+        y: PLAY_TOP + 18,
+        w: 22,
+        h: 34,
+        hp: BOSS_HP,
+        facing: -1,
+        state: "idle",
+        timer: 40,
+        anim: 0,
+        hitFlash: 0,
+      });
+    }
+  }
+
+  function resetLevel() {
+    sectionIndex = 0;
+    kills = 0;
+    score = 0;
+    combo = 0;
+    comboTimer = 0;
+    cameraX = 0;
+    locked = false;
+    player.x = 48;
+    player.y = 124;
+    player.facing = 1;
+    player.hp = PLAYER_MAX_HP;
+    player.invuln = 100;
+    player.attack = null;
+    enemies = [];
+    lettuces = [];
+    particles = [];
+    floatTexts = [];
+    attackLock = null;
+    attackCooldown = 40;
+    screenGrace = 100;
+    lettuceTimer = 160;
+    for (let i = 0; i < SECTIONS; i++) spawnSectionEnemies(i);
+    updateHud();
+  }
+
+  function spawnLettuce() {
+    if (lettuces.length > 0 || player.hp >= PLAYER_MAX_HP) return;
+    const left = cameraX + 50;
+    const right = cameraX + W - 50;
+    lettuces.push({
+      x: left + Math.random() * Math.max(20, right - left),
+      y: PLAY_TOP + 10 + Math.random() * 30,
+      w: 12,
+      h: 10,
+      bob: Math.random() * Math.PI * 2,
+      life: 700,
+    });
+  }
+
+  function startAttack(type) {
+    if (state !== "playing" && state !== "go") return;
+    if (player.attack) return;
+    player.attack = { type, frame: 0, hit: false };
+  }
+
+  function attackHitbox() {
+    if (!player.attack) return null;
+    const isKick = player.attack.type === "kick";
+    const range = isKick ? KICK_RANGE : PUNCH_RANGE;
+    const height = isKick ? 14 : 12;
+    const yOff = isKick ? 10 : 6;
+    const x = player.facing === 1 ? player.x + player.w - 2 : player.x - range + 2;
+    return {
+      x,
+      y: player.y + yOff,
+      w: range,
+      h: height,
+      damage: isKick ? KICK_DAMAGE : PUNCH_DAMAGE,
+    };
+  }
+
+  function damagePlayer(amount) {
+    if (player.invuln > 0 || (state !== "playing" && state !== "go")) return;
+    player.hp = Math.max(0, +(player.hp - amount).toFixed(1));
+    player.invuln = 90;
+    player.x = clamp(player.x - player.facing * 14, cameraX + 8, cameraX + W - player.w - 8);
+    screenFlash = 8;
+    attackCooldown = 55;
+    combo = 0;
+    addParticles(player.x + player.w / 2, player.y + 10, "#9b2b1f", 8);
+    addFloat(player.x, player.y - 4, `-${amount}`, "#ff6b5a");
+    updateHud();
+    if (player.hp <= 0) {
+      state = "lose";
+      message = "¡GAME OVER!\nLas zanahorias tomaron el bosque.";
+      showOverlay(true);
+    }
+  }
+
+  function killEnemy(enemy) {
+    enemy.state = "dead";
+    enemy.timer = 20;
+    kills += 1;
+    combo += 1;
+    comboTimer = 90;
+    const points = enemy.kind === "boss" ? 1000 : 100 * combo;
+    score += points;
+    addParticles(enemy.x + enemy.w / 2, enemy.y + 8, enemy.kind === "boss" ? "#ffe07a" : "#d66a1f", 12);
+    addFloat(enemy.x, enemy.y - 8, enemy.kind === "boss" ? "REY KO!" : `${points}`, "#ffe07a");
+    if (attackLock === enemy.id) attackLock = null;
+    updateHud();
+    checkSectionClear();
+  }
+
+  function checkSectionClear() {
+    if (livingInSection(sectionIndex).length > 0) return;
+    locked = false;
+    attackLock = null;
+    if (kills >= TOTAL_ENEMIES) {
+      state = "win";
+      message = `¡NIVEL COMPLETADO!\n30 zanahorias derrotadas · SCORE ${score}`;
+      showOverlay(true);
+      return;
+    }
+    state = "go";
+    goBlink = 0;
+  }
+
+  function enterLockIfNeeded() {
+    if (locked || state === "go" || state === "win" || state === "lose") return;
+    const living = livingInSection(sectionIndex);
+    if (!living.length) return;
+    if (player.x >= lockTriggerX(sectionIndex)) {
+      locked = true;
+      screenGrace = Math.max(screenGrace, 40);
+      attackCooldown = Math.max(attackCooldown, 25);
+    }
+  }
+
+  function advanceSectionIfReady() {
+    if (state !== "go") return;
+    // Cross into the next belt segment to resume the stage
+    if (sectionIndex < SECTIONS - 1 && player.x >= sectionStart(sectionIndex + 1) + 8) {
+      sectionIndex += 1;
+      state = "playing";
+      updateHud();
+    }
+  }
+
+  function showOverlay(visible) {
+    if (!visible) {
+      overlay.classList.add("hidden");
+      return;
+    }
+    const panel = overlay.querySelector(".panel");
+    const lines = (message || "").split("\n");
+    const isTitle = state === "title";
+    panel.innerHTML = `
+      <h1>${
+        isTitle
+          ? "CONEJO PULVERIZADOR"
+          : state === "win"
+            ? "¡VICTORIA!"
+            : state === "lose"
+              ? "GAME OVER"
+              : "LISTO"
+      }</h1>
+      ${
+        isTitle
+          ? `<p class="tagline">Belt-scroll Beat'em up · demo NES</p>
+             <p>Recorre el bosque terrorífico. Limpia oleadas, sigue la flecha GO y derrota al Rey Zanahoria.</p>
+             <ul class="tips">
+               <li>Camina a la derecha: la cámara te sigue (scroll lateral)</li>
+               <li>Muévete en profundidad (↑↓) para alinear golpes</li>
+               <li>Puño: corto / 1 hit · Patada: largo / 2 hits</li>
+               <li>6 tramos · 30 enemigos · 1 agresor a la vez</li>
+             </ul>`
+          : lines.map((l) => `<p>${l}</p>`).join("")
+      }
+      <button id="btn-start" type="button">${isTitle ? "EMPEZAR" : "REINTENTAR"}</button>
+      <p class="hint desktop-hint">Teclado: ←→↑↓ / WASD · Z puño · X patada</p>
+    `;
+    overlay.classList.remove("hidden");
+    document.getElementById("btn-start").addEventListener("click", onStartClick);
+  }
+
+  function onStartClick() {
+    resetLevel();
+    state = "playing";
+    showOverlay(false);
+  }
+
+  btnStart.addEventListener("click", onStartClick);
+
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!e.target.closest(".panel")) e.preventDefault();
+    },
+    { passive: false }
+  );
+
+  window.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+      e.preventDefault();
+    }
+    if (state === "playing" || state === "go") {
+      if (e.code === "KeyZ" || e.code === "KeyJ") startAttack("punch");
+      if (e.code === "KeyX" || e.code === "KeyK") startAttack("kick");
+    }
+    if ((state === "title" || state === "lose" || state === "win") && (e.code === "Enter" || e.code === "Space")) {
+      onStartClick();
+    }
+  });
+  window.addEventListener("keyup", (e) => {
+    keys[e.code] = false;
+  });
+
+  function bindHold(el, on, off) {
+    const start = (ev) => {
+      ev.preventDefault();
+      on();
+      el.classList.add("active");
+    };
+    const end = (ev) => {
+      ev.preventDefault();
+      off();
+      el.classList.remove("active");
+    };
+    el.addEventListener("pointerdown", start);
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointerleave", end);
+    el.addEventListener("pointercancel", end);
+  }
+
+  document.querySelectorAll(".pad").forEach((btn) => {
+    const dir = btn.dataset.dir;
+    bindHold(
+      btn,
+      () => {
+        touch[dir] = true;
+      },
+      () => {
+        touch[dir] = false;
+      }
+    );
+  });
+
+  bindHold(
+    document.getElementById("btn-punch"),
+    () => {
+      touch.punch = true;
+      startAttack("punch");
+    },
+    () => {
+      touch.punch = false;
+    }
+  );
+  bindHold(
+    document.getElementById("btn-kick"),
+    () => {
+      touch.kick = true;
+      startAttack("kick");
+    },
+    () => {
+      touch.kick = false;
+    }
+  );
+
+  // ---- Update ----
+  function updateCamera() {
+    const follow = player.x - W * 0.35;
+    let minCam = 0;
+    let maxCam = LEVEL_W - W;
+    if (locked) {
+      minCam = sectionStart(sectionIndex);
+      maxCam = sectionEnd(sectionIndex) - W;
+      if (maxCam < minCam) maxCam = minCam;
+    }
+    cameraX += (clamp(follow, minCam, maxCam) - cameraX) * 0.12;
+    cameraX = clamp(cameraX, minCam, maxCam);
+  }
+
+  function updatePlayer() {
+    if (player.invuln > 0) player.invuln -= 1;
+    player.anim += 1;
+    if (comboTimer > 0) {
+      comboTimer -= 1;
+      if (comboTimer <= 0) combo = 0;
+    }
+
+    const left = keys.ArrowLeft || keys.KeyA || touch.left;
+    const right = keys.ArrowRight || keys.KeyD || touch.right;
+    const up = keys.ArrowUp || keys.KeyW || touch.up;
+    const down = keys.ArrowDown || keys.KeyS || touch.down;
+
+    let speed = 1.45;
+    player.walking = false;
+    let vx = 0;
+    let vy = 0;
+
+    if (!player.attack) {
+      if (left) {
+        vx = -speed;
+        player.facing = -1;
+        player.walking = true;
+      }
+      if (right) {
+        vx = speed;
+        player.facing = 1;
+        player.walking = true;
+      }
+      if (up) {
+        vy = -speed * 0.9;
+        player.walking = true;
+      }
+      if (down) {
+        vy = speed * 0.9;
+        player.walking = true;
+      }
+    }
+
+    let minX = cameraX + 6;
+    let maxX = cameraX + W - player.w - 6;
+    if (locked) {
+      maxX = Math.min(maxX, sectionEnd(sectionIndex) - player.w - 10);
+      minX = Math.max(minX, sectionStart(sectionIndex) + 8);
+    } else {
+      maxX = Math.min(maxX, LEVEL_W - player.w - 8);
+    }
+
+    player.x = clamp(player.x + vx, minX, maxX);
+    player.y = clamp(player.y + vy, PLAY_TOP, PLAY_BOTTOM - player.h);
+
+    enterLockIfNeeded();
+    advanceSectionIfReady();
+
+    if (player.attack) {
+      player.attack.frame += 1;
+      const maxFrame = player.attack.type === "kick" ? 14 : 10;
+      if (!player.attack.hit && player.attack.frame >= 3 && player.attack.frame <= maxFrame - 3) {
+        const hb = attackHitbox();
+        for (const e of enemies) {
+          if (e.state === "dead") continue;
+          if (!sameDepth(player, e)) continue;
+          if (!aabb(hb, e)) continue;
+          player.attack.hit = true;
+          e.hp -= hb.damage;
+          e.hitFlash = 8;
+          e.state = "hurt";
+          e.timer = 12;
+          e.x += player.facing * (e.kind === "boss" ? 4 : 8);
+          e.y = clamp(e.y + (Math.random() - 0.5) * 4, PLAY_TOP, PLAY_BOTTOM - e.h);
+          addParticles(e.x + e.w / 2, e.y + 8, "#fff3c4", 6);
+          addFloat(e.x, e.y, hb.damage >= 2 ? "PUÑO!" : "PATADA!", "#fff");
+          if (e.hp <= 0) killEnemy(e);
+          break;
+        }
+      }
+      if (player.attack.frame >= maxFrame) player.attack = null;
+    }
+  }
+
+  function chooseAttacker() {
+    if (!locked || screenGrace > 0 || attackCooldown > 0) return null;
+    if (attackLock) {
+      const still = enemies.find((e) => e.id === attackLock && e.state !== "dead");
+      if (still) return still;
+      attackLock = null;
+    }
+    const candidates = livingInSection(sectionIndex).sort(
+      (a, b) => Math.hypot(a.x - player.x, depthOf(a) - depthOf(player)) - Math.hypot(b.x - player.x, depthOf(b) - depthOf(player))
+    );
+    if (!candidates.length) return null;
+    // Prefer boss as aggressor when present and close-ish
+    const boss = candidates.find((c) => c.kind === "boss");
+    const pick = boss && Math.hypot(boss.x - player.x, depthOf(boss) - depthOf(player)) < 120 ? boss : candidates[0];
+    attackLock = pick.id;
+    return pick;
+  }
+
+  function updateEnemies() {
+    if (screenGrace > 0) screenGrace -= 1;
+    if (attackCooldown > 0) attackCooldown -= 1;
+
+    const attacker = chooseAttacker();
+
+    for (const e of enemies) {
+      e.anim += 1;
+      if (e.hitFlash > 0) e.hitFlash -= 1;
+
+      if (e.state === "dead") {
+        e.timer -= 1;
+        continue;
+      }
+
+      // Enemies far off-screen ahead don't chase yet
+      if (e.section > sectionIndex) {
+        e.state = "idle";
+        continue;
+      }
+      if (e.section < sectionIndex) {
+        // left behind — idle freeze
+        continue;
+      }
+
+      const isAttacker = attacker && attacker.id === e.id;
+      const dx = player.x - e.x;
+      const dy = player.y - e.y;
+      e.facing = dx >= 0 ? 1 : -1;
+
+      if (!locked) {
+        // Wait in place with slight bob until fight starts
+        e.x += Math.sin(e.anim * 0.04) * 0.1;
+        continue;
+      }
+
+      if (!isAttacker) {
+        if (e.state === "windup" || e.state === "strike") e.state = "idle";
+        // Flank: circle to sides and match depth loosely
+        const side = e.id.charCodeAt(e.id.length - 1) % 2 === 0 ? -1 : 1;
+        const targetX = player.x + side * (36 + (e.kind === "boss" ? 10 : 0));
+        const targetY = player.y + side * 8;
+        e.x += Math.sign(targetX - e.x) * 0.35;
+        e.y += Math.sign(targetY - e.y) * 0.3;
+        e.y = clamp(e.y, PLAY_TOP, PLAY_BOTTOM - e.h);
+        // separation
+        for (const other of enemies) {
+          if (other === e || other.state === "dead" || other.section !== e.section) continue;
+          const gap = other.x - e.x;
+          if (Math.abs(gap) < 18) e.x -= Math.sign(gap || 1) * 0.4;
+        }
+        continue;
+      }
+
+      if (e.state === "hurt") {
+        e.timer -= 1;
+        if (e.timer <= 0) e.state = "approach";
+        continue;
+      }
+
+      const dist = Math.hypot(dx, dy * 1.2);
+      const reach = e.kind === "boss" ? 26 : 22;
+
+      if (e.state === "idle" || e.state === "approach") {
+        e.state = "approach";
+        if (Math.abs(dy) > 2) e.y += Math.sign(dy) * (e.kind === "boss" ? 0.75 : 0.6);
+        if (dist > reach) {
+          e.x += e.facing * (e.kind === "boss" ? 0.85 : 0.7);
+        } else {
+          e.state = "windup";
+          e.timer = e.kind === "boss" ? 16 : 24;
+        }
+        e.y = clamp(e.y, PLAY_TOP, PLAY_BOTTOM - e.h);
+        continue;
+      }
+
+      if (e.state === "windup") {
+        e.timer -= 1;
+        if (e.timer <= 0) {
+          e.state = "strike";
+          e.timer = e.kind === "boss" ? 14 : 12;
+        }
+        continue;
+      }
+
+      if (e.state === "strike") {
+        e.timer -= 1;
+        const hitFrame = e.kind === "boss" ? 8 : 7;
+        if (e.timer === hitFrame) {
+          const hitbox = {
+            x: e.facing === 1 ? e.x + e.w - 2 : e.x - (e.kind === "boss" ? 22 : 16),
+            y: e.y + 6,
+            w: e.kind === "boss" ? 24 : 16,
+            h: e.kind === "boss" ? 18 : 14,
+          };
+          if (aabb(hitbox, player) && sameDepth(e, player)) {
+            damagePlayer(e.kind === "boss" ? BOSS_DAMAGE : ENEMY_DAMAGE);
+          }
+        }
+        if (e.timer <= 0) {
+          e.state = "idle";
+          attackLock = null;
+          attackCooldown = e.kind === "boss" ? 35 : 55;
+        }
+      }
+    }
+  }
+
+  function updateLettuce() {
+    lettuceTimer -= 1;
+    if (lettuceTimer <= 0) {
+      spawnLettuce();
+      lettuceTimer = player.hp <= 1.5 ? 180 + Math.random() * 100 : 300 + Math.random() * 200;
+    }
+    for (const leaf of lettuces) {
+      leaf.bob += 0.08;
+      leaf.life -= 1;
+      if (aabb(player, { x: leaf.x, y: leaf.y - 6, w: leaf.w, h: leaf.h + 12 })) {
+        player.hp = Math.min(PLAYER_MAX_HP, +(player.hp + 1).toFixed(1));
+        addFloat(leaf.x, leaf.y - 6, "+1 VIDA", "#7dff7a");
+        addParticles(leaf.x + 6, leaf.y + 4, "#5fbf45", 8);
+        leaf.life = 0;
+        updateHud();
+      }
+    }
+    lettuces = lettuces.filter((l) => l.life > 0);
+  }
+
+  function updateFx() {
+    if (screenFlash > 0) screenFlash -= 1;
+    goBlink += 1;
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08;
+      p.life -= 1;
+    }
+    particles = particles.filter((p) => p.life > 0);
+    for (const f of floatTexts) {
+      f.y -= 0.55;
+      f.life -= 1;
+    }
+    floatTexts = floatTexts.filter((f) => f.life > 0);
+    enemies = enemies.filter((e) => e.state !== "dead" || e.timer > 0);
+  }
+
+  function update() {
+    if (state !== "playing" && state !== "go") return;
+    updatePlayer();
+    updateEnemies();
+    updateLettuce();
+    updateCamera();
+    updateFx();
+  }
+
+  // ---- Draw ----
+  function fillRect(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function drawDeadTree(x, y, scale, color) {
+    const t = (v) => v * scale;
+    fillRect(x + t(10), y + t(20), t(8), t(90), color);
+    fillRect(x + t(2), y + t(30), t(14), t(5), color);
+    fillRect(x + t(16), y + t(40), t(18), t(4), color);
+    fillRect(x + t(0), y + t(48), t(12), t(4), color);
+    fillRect(x + t(4), y + t(52), t(2), t(10), "#254020");
+    fillRect(x + t(22), y + t(44), t(2), t(12), "#254020");
+  }
+
+  function drawBackground() {
+    const far = cameraX * 0.25;
+    const mid = cameraX * 0.5;
+
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#0b0f14");
+    grad.addColorStop(0.5, "#121a12");
+    grad.addColorStop(1, "#1a2214");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // moon
+    const moonX = 250 - (far % 60);
+    fillRect(moonX, 16, 18, 18, "#d9d2b0");
+    fillRect(moonX + 5, 18, 8, 8, "#0b0f14");
+
+    for (let i = -2; i < 14; i++) {
+      const tx = i * 48 - (far % 48);
+      drawDeadTree(tx, 28, 0.65, "#152015");
+    }
+    for (let i = -2; i < 12; i++) {
+      const tx = i * 56 - (mid % 56);
+      drawDeadTree(tx - 10, 36, 0.85, "#10180e");
+    }
+
+    ctx.globalAlpha = 0.14;
+    fillRect(0, 68, W, 12, "#6a7f5a");
+    fillRect(0, 92, W, 8, "#4a5a40");
+    ctx.globalAlpha = 1;
+
+    // playfield belt
+    fillRect(0, PLAY_TOP - 6, W, H - (PLAY_TOP - 6), "#1c2816");
+    fillRect(0, PLAY_TOP - 6, W, 3, "#2f3f24");
+    for (let i = 0; i < 24; i++) {
+      const gx = ((i * 28 - cameraX) % (W + 28) + W + 28) % (W + 28) - 14;
+      fillRect(gx, PLAY_BOTTOM - 4, 4, 2, "#0f160e");
+      fillRect(gx + 10, PLAY_BOTTOM + 8, 12, 2, "#24301c");
+    }
+
+    // section markers on ground
+    for (let s = 0; s < SECTIONS; s++) {
+      const mx = sectionEnd(s) - 10 - cameraX;
+      if (mx > -20 && mx < W + 20) {
+        fillRect(mx, PLAY_BOTTOM - 2, 3, 10, s === sectionIndex ? "#d66a1f" : "#3a4a30");
+      }
+    }
+
+    // near trees framing
+    drawDeadTree(-18 - ((cameraX * 0.8) % 3), 18, 1.15, "#0c120c");
+    drawDeadTree(278 + ((cameraX * 0.7) % 2), 22, 1.1, "#0e140e");
+  }
+
+  function drawRabbit(p) {
+    if (p.invuln > 0 && Math.floor(p.invuln / 2) % 2 === 0) return;
+    const x = Math.round(p.x - cameraX);
+    const y = Math.round(p.y);
+    const f = p.facing;
+    const walkFrame = p.walking ? Math.floor(p.anim / 6) % 2 : 0;
+
+    fillRect(x + 2, Math.round(depthOf(p)) - 1, 12, 3, "rgba(0,0,0,0.35)");
+
+    if (walkFrame === 0) {
+      fillRect(x + (f === 1 ? 3 : 9), y + 22, 4, 6, "#f2f2f2");
+      fillRect(x + (f === 1 ? 9 : 3), y + 22, 4, 6, "#e8e8e8");
+    } else {
+      fillRect(x + (f === 1 ? 2 : 10), y + 22, 4, 6, "#f2f2f2");
+      fillRect(x + (f === 1 ? 10 : 2), y + 23, 4, 5, "#e8e8e8");
+    }
+
+    fillRect(x + 3, y + 10, 10, 13, "#f5f5f5");
+    fillRect(x + 2, y + 12, 12, 8, "#ffffff");
+    fillRect(x + 4, y + 14, 3, 2, "#d0d0d0");
+    fillRect(x + 9, y + 14, 3, 2, "#d0d0d0");
+
+    fillRect(x + 4, y + 3, 8, 8, "#ffffff");
+    fillRect(x + 4, y - 6, 3, 10, "#ffffff");
+    fillRect(x + 9, y - 6, 3, 10, "#ffffff");
+    fillRect(x + 5, y - 4, 1, 6, "#f0a0b0");
+    fillRect(x + 10, y - 4, 1, 6, "#f0a0b0");
+
+    const eyeX = f === 1 ? x + 9 : x + 5;
+    fillRect(eyeX, y + 5, 2, 2, "#1a1a1a");
+    fillRect(f === 1 ? x + 8 : x + 6, y + 8, 2, 1, "#e07080");
+
+    if (p.attack) {
+      const progress = p.attack.frame;
+      if (p.attack.type === "punch") {
+        const reach = progress < 5 ? progress * 2 : Math.max(0, 10 - progress) * 2;
+        const ax = f === 1 ? x + 12 : x - reach;
+        fillRect(ax, y + 12, 4 + reach, 4, "#ffffff");
+        fillRect(f === 1 ? ax + reach : ax, y + 11, 5, 6, "#f0f0f0");
+      } else {
+        const reach = progress < 7 ? progress * 2.2 : Math.max(0, 14 - progress) * 2.2;
+        const ax = f === 1 ? x + 10 : x - reach;
+        fillRect(ax, y + 16, 4 + reach, 4, "#ffffff");
+        fillRect(f === 1 ? ax + reach - 2 : ax, y + 14, 6, 8, "#ececec");
+      }
+      const hb = attackHitbox();
+      if (hb) {
+        ctx.globalAlpha = 0.18;
+        fillRect(hb.x - cameraX, hb.y, hb.w, hb.h, p.attack.type === "kick" ? "#4aa3ff" : "#ff7a4a");
+        ctx.globalAlpha = 1;
+      }
+    } else {
+      fillRect(x + (f === 1 ? 12 : 0), y + 12, 4, 8, "#ffffff");
+      fillRect(x + (f === 1 ? 0 : 12), y + 12, 4, 8, "#f0f0f0");
+    }
+  }
+
+  function drawCarrot(e) {
+    if (e.state === "dead" && e.timer <= 0) return;
+    const x = Math.round(e.x - cameraX);
+    const y = Math.round(e.y);
+    const flash = e.hitFlash > 0;
+    const boss = e.kind === "boss";
+
+    fillRect(x + 1, Math.round(depthOf(e)) - 1, boss ? 18 : 12, 3, "rgba(0,0,0,0.3)");
+    if (e.state === "dead") ctx.globalAlpha = Math.max(0, e.timer / 20);
+
+    const bodyW = boss ? 14 : 8;
+    const bodyH = boss ? 24 : 16;
+    fillRect(x + 3, y + (boss ? 8 : 6), bodyW, bodyH, flash ? "#fff0c0" : boss ? "#b84a10" : "#e07020");
+    fillRect(x + 4, y + (boss ? 10 : 8), bodyW - 2, bodyH - 4, flash ? "#ffe080" : boss ? "#8f3408" : "#c45a12");
+
+    fillRect(x + (boss ? 7 : 5), y + 1, 2, boss ? 8 : 6, "#3f8f2a");
+    fillRect(x + (boss ? 4 : 3), y + 2, 2, 4, "#2f6f1e");
+    fillRect(x + (boss ? 11 : 8), y + 2, 2, 4, "#4aa032");
+    if (boss) {
+      // crown
+      fillRect(x + 5, y - 2, 12, 3, "#ffe07a");
+      fillRect(x + 5, y - 5, 2, 3, "#ffe07a");
+      fillRect(x + 10, y - 6, 2, 4, "#ffe07a");
+      fillRect(x + 15, y - 5, 2, 3, "#ffe07a");
+    }
+
+    fillRect(x + (e.facing === 1 ? (boss ? 12 : 7) : (boss ? 5 : 4)), y + (boss ? 14 : 10), 2, 2, "#1a3010");
+    fillRect(x + (e.facing === 1 ? (boss ? 5 : 4) : (boss ? 12 : 7)), y + (boss ? 14 : 10), 2, 2, "#7dff4a");
+    fillRect(x + (boss ? 7 : 5), y + (boss ? 20 : 14), boss ? 6 : 4, 2, "#3a2010");
+
+    if (e.state === "windup") {
+      fillRect(x + (e.facing === 1 ? bodyW + 2 : -4), y + 10, boss ? 10 : 6, 3, "#d66a1f");
+    } else if (e.state === "strike") {
+      fillRect(x + (e.facing === 1 ? bodyW + 2 : -(boss ? 14 : 8)), y + 12, boss ? 16 : 10, 3, "#d66a1f");
+    } else {
+      fillRect(x + 1, y + (boss ? 16 : 12), 3, 5, "#d66a1f");
+      fillRect(x + bodyW + 2, y + (boss ? 16 : 12), 3, 5, "#d66a1f");
+    }
+
+    if (e.state !== "dead") {
+      const maxHp = boss ? BOSS_HP : ENEMY_HP;
+      const barW = boss ? 20 : 8;
+      fillRect(x + 2, y - 5, barW, 2, "#3a2010");
+      fillRect(x + 2, y - 5, Math.ceil(barW * (e.hp / maxHp)), 2, boss ? "#ffe07a" : "#7dff4a");
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawLettuce(leaf) {
+    const x = Math.round(leaf.x - cameraX);
+    const y = Math.round(leaf.y + Math.sin(leaf.bob) * 2);
+    fillRect(x + 2, y + 2, 8, 6, "#5fbf45");
+    fillRect(x + 1, y + 3, 10, 4, "#4aa832");
+    fillRect(x + 4, y + 1, 4, 2, "#7dff6a");
+  }
+
+  function drawUi() {
+    ctx.font = "8px monospace";
+    ctx.fillStyle = "#c9d6b8";
+    const remaining = livingInSection(sectionIndex).length;
+    if (locked) {
+      ctx.fillText(`OLEADA · Restantes ${remaining}`, 8, 12);
+    } else if (state === "go") {
+      ctx.fillStyle = goBlink % 30 < 18 ? "#ffe07a" : "#7a6a30";
+      ctx.font = "10px monospace";
+      ctx.fillText("GO →", W - 48, 24);
+      ctx.fillText("GO →", W - 48, H / 2);
+    } else {
+      ctx.fillText("Avanza →", 8, 12);
+    }
+    ctx.fillStyle = "#a8b898";
+    ctx.font = "8px monospace";
+    ctx.fillText(`SCORE ${score}`, W - 78, 12);
+    if (combo > 1) {
+      ctx.fillStyle = "#ffe07a";
+      ctx.fillText(`COMBO x${combo}`, W - 78, 22);
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+
+    const drawables = [
+      ...lettuces.map((l) => ({ z: l.y + l.h, draw: () => drawLettuce(l) })),
+      ...enemies.map((e) => ({ z: depthOf(e), draw: () => drawCarrot(e) })),
+      { z: depthOf(player), draw: () => drawRabbit(player) },
+    ].sort((a, b) => a.z - b.z);
+
+    for (const d of drawables) d.draw();
+
+    for (const p of particles) fillRect(p.x - cameraX, p.y, 2, 2, p.color);
+    for (const f of floatTexts) {
+      ctx.globalAlpha = Math.min(1, f.life / 20);
+      ctx.fillStyle = f.color;
+      ctx.font = "8px monospace";
+      ctx.fillText(f.text, Math.round(f.x - cameraX), Math.round(f.y));
+      ctx.globalAlpha = 1;
+    }
+
+    if (screenFlash > 0) {
+      ctx.globalAlpha = 0.25;
+      fillRect(0, 0, W, H, "#9b2b1f");
+      ctx.globalAlpha = 1;
+    }
+
+    drawUi();
+
+    ctx.globalAlpha = 0.06;
+    for (let y = 0; y < H; y += 2) fillRect(0, y, W, 1, "#000");
+    ctx.globalAlpha = 1;
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.__game = {
+    getState: () => ({
+      state,
+      hp: player.hp,
+      kills,
+      sectionIndex,
+      locked,
+      cameraX,
+      playerX: player.x,
+      score,
+      invuln: player.invuln,
+      screenGrace,
+      enemies: enemies.map((e) => ({
+        id: e.id,
+        section: e.section,
+        kind: e.kind,
+        state: e.state,
+        x: e.x,
+        y: e.y,
+        hp: e.hp,
+      })),
+    }),
+    start: () => onStartClick(),
+    punch: () => startAttack("punch"),
+    kick: () => startAttack("kick"),
+    holdRight: (v) => {
+      touch.right = !!v;
+    },
+    holdUp: (v) => {
+      touch.up = !!v;
+    },
+    holdDown: (v) => {
+      touch.down = !!v;
+    },
+    clearSection: () => {
+      if (state !== "playing" && state !== "go") return;
+      for (const e of livingInSection(sectionIndex)) killEnemy(e);
+      enemies.forEach((e) => {
+        if (e.state === "dead") e.timer = 0;
+      });
+      checkSectionClear();
+    },
+  };
+
+  updateHud();
+  showOverlay(true);
+  requestAnimationFrame(loop);
+})();
+
+  </script>
+</body>
+</html>

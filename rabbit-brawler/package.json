@@ -1,0 +1,13 @@
+{
+  "name": "rabbit-brawler",
+  "version": "1.0.0",
+  "description": "Demo Beat'em up NES-style: conejo musculoso vs zanahorias zombies",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve -l 4173 .",
+    "build:web": "mkdir -p dist && cp index.html dist/ && cp -r css js dist/",
+    "cap:init": "npm install @capacitor/core @capacitor/cli @capacitor/android && npx cap init \"Conejo Pulverizador\" com.conejo.pulverizador --web-dir dist",
+    "cap:sync": "npm run build:web && npx cap sync android",
+    "cap:open": "npx cap open android"
+  }
+}
