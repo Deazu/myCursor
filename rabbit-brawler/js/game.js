@@ -300,6 +300,15 @@
 
   btnStart.addEventListener("click", onStartClick);
 
+  // Prevent mobile browser chrome / scroll from eating gameplay touches
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!e.target.closest(".panel")) e.preventDefault();
+    },
+    { passive: false }
+  );
+
   // ---- Input ----
   window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
